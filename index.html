@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Information Viewer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #e0e0e0;
+        }
+
+        .container {
+            text-align: center;
+            background-color: #1e1e1e;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            width: 320px;
+        }
+
+        h1 {
+            font-size: 26px;
+            margin-bottom: 20px;
+            color: #80cbc4;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            width: 85%;
+            margin-bottom: 15px;
+            border: 1px solid #333;
+            border-radius: 5px;
+            background-color: #2e2e2e;
+            color: #e0e0e0;
+        }
+
+        input[type="text"]::placeholder {
+            color: #b0b0b0;
+        }
+
+        button {
+            padding: 10px 25px;
+            border: none;
+            background-color: #ff7043;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #f4511e;
+        }
+
+        #stockInfo {
+            margin-top: 25px;
+            background-color: #2e2e2e;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #stockName {
+            font-size: 22px;
+            margin-bottom: 10px;
+            color: #80cbc4;
+        }
+
+        #stockPrice {
+            font-size: 20px;
+            color: #81c784;
+        }
+
+        #stockChange {
+            font-size: 18px;
+            color: #ffb74d;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Stock Information Viewer</h1>
+        <form id="stockForm">
+            <input type="text" id="ticker" placeholder="Enter Stock Ticker (e.g. AAPL)" required>
+            <button type="submit">Get Stock Info</button>
+        </form>
+        <div id="stockInfo" class="hidden">
+            <h2 id="stockName"></h2>
+            <p id="stockPrice"></p>
+            <p id="stockChange"></p>
+        </div>
+    </div>
+    
+    <script>
+        $(document).ready(function() {
+            $('#stockForm').submit(function(event) {
+                event.preventDefault();
+                const ticker = $('#ticker').val().toUpperCase();
+
+                $.ajax({
+                    url: `https://api.polygon.io/v3/reference/tickers/${ticker}?apiKey=I33bVmWGtj8ALL3sC039A_Z3lHmH27qI`,
+                    method: 'GET',
+                    success: function(data) {
+                        if (data.results) {
+                            const companyName = data.results.name;
+                            
+                            // Fetch stock price
+                            $.ajax({
+                                url: `https://api.polygon.io/v2/aggs/ticker/${ticker}/prev?apiKey=I33bVmWGtj8ALL3sC039A_Z3lHmH27qI`,
+                                method: 'GET',
+                                success: function(priceData) {
+                                    if (priceData.results && priceData.results.length > 0) {
+                                        const stockPrice = priceData.results[0].c;
+                                        const stockChange = (priceData.results[0].c - priceData.results[0].o).toFixed(2);
+
+                                        $('#stockName').text(companyName);
+                                        $('#stockPrice').text(`Price: $${stockPrice}`);
+                                        $('#stockChange').text(`Change: $${stockChange}`);
+                                        $('#stockInfo').removeClass('hidden');
+                                    }
+                                },
+                                error: function() {
+                                    alert('Error fetching stock price.');
+                                }
+                            });
+                        } else {
+                            alert('Stock ticker not found.');
+                        }
+                    },
+                    error: function() {
+                        alert('Error fetching stock information.');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
